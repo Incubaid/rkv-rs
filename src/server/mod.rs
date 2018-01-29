@@ -9,11 +9,13 @@ use storage::Storage;
 mod request;
 
 fn handle(stream: &TcpStream, storage: &mut Storage) -> Result<()> {
-    let mut reader = BufReader::new(stream); // TODO: handle properly
+    let mut reader = request::Request {
+        reader: BufReader::new(stream),
+    };
     let mut writer = BufWriter::new(stream);
 
     loop {
-        let x = request::decode(&mut reader);
+        let x = reader.decode();
 
         if let Some(payload) = x.unwrap() {
             match payload {
