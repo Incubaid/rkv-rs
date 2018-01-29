@@ -5,7 +5,6 @@ use std::net::TcpStream;
 
 use Command;
 use storage::Storage;
-use std::str;
 
 mod request;
 
@@ -32,13 +31,9 @@ fn handle(stream: &TcpStream, storage: &mut Storage) -> Result<()> {
                 Command::GET(hash) => match storage.get(&hash) {
                     Ok(val) => {
                         // $xx\r\n + payload + \r\n
-                        match str::from_utf8(&val) {
-                            Ok(res) => {
-                                let msg = format!("${}\r\n{}\r\n", res.len(), res);
-                                write(&mut writer, msg.as_bytes())?
-                            }
-                            Err(_) => write(&mut writer, b"-Corrupted data\r\n")?,
-                        };
+                        let msg = format!("${}\r\n", val.len());
+                        let vec = [msg.as_bytes(), &val, b"\r\n"].concat();
+                        write(&mut writer, &vec)?
                     }
                     Err(error) => {
                         let msg = format!("-Error: {}", error);
