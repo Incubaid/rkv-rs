@@ -17,9 +17,10 @@ impl Data {
             .read(true)
             .create(true)
             .mode(0o600)
-            .append(true)
+            .write(true)
             .open(path)?;
 
+        file.seek(SeekFrom::Start(0))?;
         if file.write(b"X")? != 1 {
             return Err(Error::new(
                 ErrorKind::Interrupted,
@@ -35,7 +36,7 @@ impl Data {
         let mut buf = Vec::new();
 
         let metadata = Metadata {
-            offset: (&self.handler).seek(SeekFrom::Current(0))?,
+            offset: (&self.handler).seek(SeekFrom::End(0))?,
             length: data.len() as u32,
             hash: sha256(&data[..]),
         };
