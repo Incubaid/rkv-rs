@@ -14,48 +14,33 @@ pub fn decode(buf: &mut BufReader<&TcpStream>) -> io::Result<Option<Command>> {
             return Err(io::Error::new(io::ErrorKind::Other, "not an array"));
         }
 
-        let argc = match line_iter.next() {
-            Some(arg) => arg.to_digit(10),
-            None => {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "failed to parse request",
-                ));
-            }
-        };
+        let argc = line_iter
+            .next()
+            .and_then(|arg| arg.to_digit(10))
+            .ok_or(io::Error::new(io::ErrorKind::Other, "Malformed request"))?;
 
         let mut args: Vec<Vec<u8>> = Vec::new();
 
-        if let Some(argc) = argc {
-            for _i in 0..argc {
-                if let Some(mut line) = read_line(buf)? {
-                    if !line.starts_with('$') {
-                        return Err(io::Error::new(
-                            io::ErrorKind::Other,
-                            "Malformed request (string)",
-                        ));
+        for _i in 0..argc {
+            read_line(buf)?
+                .and_then(|line| {
+                    if line.starts_with('$') {
+                        Some(line)
+                    } else {
+                        None
                     }
-
+                })
+                .and_then(|line| {
                     let max_slice_size = if line.len() > 2 { 3 } else { 2 };
-                    let size: u64 = match line.get(1..max_slice_size) {
-                        Some(s) => s.parse().map_err(|_| {
-                            io::Error::new(io::ErrorKind::Other, "Malformed request")
-                        })?,
-                        None => {
-                            return Err(io::Error::new(io::ErrorKind::Other, "Malformed request"));
-                        }
-                    };
-
+                    line.get(1..max_slice_size)?.parse().ok()
+                })
+                .and_then(|size: u64| {
                     let mut buffer: Vec<u8> = vec![];
-                    buf.take(size + 2).read_to_end(&mut buffer)?;
+                    buf.take(size + 2).read_to_end(&mut buffer).ok();
                     args.push(buffer[..buffer.len() - 2].to_vec());
-                } else {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "failed to parse request",
-                    ));
-                }
-            }
+                    Some(0)
+                })
+                .ok_or(io::Error::new(io::ErrorKind::Other, "Malformed request"))?;
         }
 
         match &args[0][..] {
