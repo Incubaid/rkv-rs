@@ -49,7 +49,7 @@ pub fn decode(buf: &mut BufReader<&TcpStream>) -> io::Result<Option<Command>> {
                 if args.len() < 2 {
                     return Err(io::Error::new(io::ErrorKind::Other, "Malformed request"));
                 }
-                Ok(Some(Command::SET(args[2].clone())))
+                Ok(Some(Command::SET(args.swap_remove(2))))
             }
             b"GET" => {
                 if args.len() < 1 {
