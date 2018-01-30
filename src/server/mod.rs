@@ -61,8 +61,9 @@ fn write<W: Write>(writer: &mut BufWriter<W>, data: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub fn listen(storage: &mut Storage) {
-    let listener = TcpListener::bind("0.0.0.0:9900").unwrap();
+pub fn listen(addr: &str, storage: &mut Storage) {
+    info!("Listen on: {}", addr);
+    let listener = TcpListener::bind(addr).unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         handle(&stream, storage).unwrap(); // TODO: handle error

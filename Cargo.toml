@@ -5,10 +5,12 @@ authors = ["Khaled K. Badr <khaledkbadr@outlook.com>"]
 
 [dependencies]
 byteorder = "1.2"
-pretty_env_logger = "0.1"
 openssl = "0.9"
 bincode = "0.9"
 serde_derive = "1.0"
 serde = "1.0"
 hex = "0.3"
 atoi = "0.2"
+clap = "2.29"
+env_logger = "0.5"
+log = "0.4"
